@@ -1,7 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Form, Input, Button, Toast, NavBar, ImageUploader, SpinLoading, Selector } from 'antd-mobile';
+import { Form, Input, Button, Toast, NavBar, ImageUploader, SpinLoading, Selector, DatePicker } from 'antd-mobile';
 import api from '../services/api';
+
+const formatDate = (date) => {
+  if (!date) return null;
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const ApplicationPage = () => {
   const navigate = useNavigate();
@@ -23,35 +32,38 @@ const ApplicationPage = () => {
   // Effect Hook: 在组件加载时执行一次，用于数据初始化
   useEffect(() => {
     const initializePage = async () => {
+      setPageLoading(true); 
       if (mode === 'create') {
         // 新建模式：获取当前登录用户的个人资料以预填表单
         try {
           const res = await api.get('/auth/profile');
           if (res.data.success) {
-            // 使用 form.setFieldsValue 预填信息
-            form.setFieldsValue({
-              name: res.data.data.name,
-              id_number: res.data.data.id_number,
-              id_type: res.data.data.id_type,
-            });
+            const profileData = res.data.data;
+            // 准备要填充到表单的数据
+            const formValues = {
+              name: profileData.name,
+              gender: profileData.gender,
+              phone_number: profileData.phone_number,
+              address: profileData.address,
+             id_type: '居民身份证',
+              birthday: profileData.birthday ? new Date(profileData.birthday) : null,
+            };
+            // 使用 form.setFieldsValue 预填所有信息
+            form.setFieldsValue(formValues);
           }
         } catch (error) {
           Toast.show({ icon: 'fail', content: error.response?.data?.message||'无法获取用户信息' });
         }
       } else {
-        // 修改模式：从 location.state 中获取已有的申请数据
         const existingData = location.state?.applicationData;
         if (existingData) {
-          form.setFieldsValue(existingData);
-          // 将已有的图片URL设置到ImageUploader中
-          if (existingData.id_front_photo_url) {
-            setIdFrontFileList([{ url: existingData.id_front_photo_url }]);
-          }
-          if (existingData.id_back_photo_url) {
-            setIdBackFileList([{ url: existingData.id_back_photo_url }]);
-          }
-        } else {
-            // 如果用户直接通过URL访问修改页，没有数据，则提示并返回
+          const dataWithDateObject = {
+            ...existingData,
+            birthday: existingData.birthday ? new Date(existingData.birthday) : null,
+          };
+          form.setFieldsValue(dataWithDateObject);
+          if (existingData.id_front_photo_url) setIdFrontFileList([{ url: existingData.id_front_photo_url }]);
+          if (existingData.id_back_photo_url) setIdBackFileList([{ url: existingData.id_back_photo_url }]);        } else {
             Toast.show({icon: 'fail', content: '缺少申请数据，请返回主页重试'});
             navigate('/', {replace: true});
             return;
@@ -62,7 +74,6 @@ const ApplicationPage = () => {
 
     initializePage();
   }, [mode, form, navigate, location.state]);
-
   // 自定义图片上传逻辑
   const customUpload = async (file) => {
     const formData = new FormData();
@@ -100,6 +111,8 @@ const ApplicationPage = () => {
     setSubmitLoading(true);
     
     const payload = {
+        ...values,
+        birthday: formatDate(values.birthday),
         id_front_photo_url: idFrontFileList[0].url,
         id_back_photo_url: idBackFileList[0].url,
     };
@@ -108,14 +121,23 @@ const ApplicationPage = () => {
         let response;
         if (mode === 'create') {
             // 新建模式，调用 submit 接口
-            payload.id_type = values.id_type;
-            payload.id_number = values.id_number;
             response = await api.post('/application/submit', payload);
         } else {
             // 修改模式，调用 update 接口
-            payload.application_id = parseInt(applicationId, 10);
-            response = await api.post('/application/update', payload);
+        const updatePayload = {
+            application_id: parseInt(applicationId, 10),
+            name: payload.name,
+            gender: payload.gender,
+            phone_number: payload.phone_number,
+            address: payload.address,
+            id_type: payload.id_type,
+            id_number: payload.id_number,
+            birthday: payload.birthday,
+            id_front_photo_url: payload.id_front_photo_url,
+            id_back_photo_url: payload.id_back_photo_url,
         }
+        response = await api.post('/application/update', updatePayload);
+      }
 
         if (response.data.success) {
             Toast.show({ icon: 'success', content: mode === 'create' ? '申请提交成功！' : '申请修改成功！' });
@@ -156,37 +178,55 @@ const ApplicationPage = () => {
         }
       >
         <Form.Header>个人信息</Form.Header>
-        <Form.Item name="name" label="申请人姓名" disabled>
-          <Input placeholder='将自动填充' />
-        </Form.Item>
-        <Form.Item name="id_type" label="证件类型" rules={[{ required: true }]} disabled={mode === 'update'}>
-             <Selector
-                options={[{label: '居民身份证', value: '居民身份证'}, {label: '港澳台居民居住证', value: '港澳台居民居住证'}]}
-             />
-        </Form.Item>
-        <Form.Item name="id_number" label="证件号码" rules={[{ required: true }]} disabled={mode === 'update'}>
-          <Input placeholder='将自动填充' />
+        <Form.Item name="name" label="申请人姓名" rules={[{ required: true }]}>
+          <Input placeholder='请输入姓名' />
         </Form.Item>
 
-        <Form.Header>证件照片上传 (请上传清晰的原始照片)</Form.Header>
+        <Form.Item name="gender" label="性别" rules={[{ required: true }]}>
+             <Selector options={[{label: '男', value: '男'}, {label: '女', value: '女'}]} />
+        </Form.Item>
+
+        <Form.Item
+          name="birthday"
+          label="出生日期"
+          trigger="onConfirm"
+          onClick={(e, datePickerRef) => {
+            datePickerRef.current?.open();
+          }}
+          rules={[{ required: true, message: '请选择您的出生日期' }]}
+          disabled={mode === 'update'}
+        >
+          <DatePicker max={new Date()}>
+            {value => value ? formatDate(value) : '请选择出生日期'}
+          </DatePicker>
+        </Form.Item>
+
+        <Form.Item name="phone_number" label="手机号码" rules={[{ required: true }]}>
+            <Input placeholder='请输入手机号码' />
+        </Form.Item>
+        
+        <Form.Item name="address" label="联系地址" rules={[{ required: true }]}>
+            <Input placeholder='请输入联系地址' />
+        </Form.Item>
+        
+        <Form.Header>证件信息</Form.Header>
+
+        <Form.Item name="id_type" label="证件类型" rules={[{ required: true }]} disabled={mode === 'update'}>
+             <Selector options={[{label: '居民身份证', value: '居民身份证'}, {label: '港澳台居民居住证', value: '港澳台居民居住证'}]} />
+        </Form.Item>
+        
+        <Form.Item name="id_number" label="证件号码" rules={[{ required: true }]} disabled={mode === 'update'}>
+          <Input placeholder='请输入证件号码' />
+        </Form.Item>
+
+        <Form.Header>证件照片上传</Form.Header>
         <Form.Item label="身份证明文件正面" rules={[{ required: true }]} extra="即有头像的一面">
-          <ImageUploader
-            value={idFrontFileList}
-            onChange={setIdFrontFileList}
-            upload={customUpload}
-            maxCount={1}
-          />
+          <ImageUploader value={idFrontFileList} onChange={setIdFrontFileList} upload={customUpload} maxCount={1} />
         </Form.Item>
         <Form.Item label="身份证明文件反面" rules={[{ required: true }]} extra="即有国徽的一面">
-          <ImageUploader
-            value={idBackFileList}
-            onChange={setIdBackFileList}
-            upload={customUpload}
-            maxCount={1}
-          />
+          <ImageUploader value={idBackFileList} onChange={setIdBackFileList} upload={customUpload} maxCount={1} />
         </Form.Item>
-      </Form>
-    </div>
+      </Form>    </div>
   );
 };
 
