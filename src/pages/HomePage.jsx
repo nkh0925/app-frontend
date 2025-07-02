@@ -116,9 +116,14 @@ const HomePage = () => {
               // 根据状态显示不同的操作按钮
               <>
                 {app.status === 'REJECTED' && (
-                  <Button size='small' color='primary' fill='outline' onClick={() => navigate(`/apply/${app.id}`)}>
+                <Button 
+                    size='small' 
+                    color='primary' 
+                    fill='outline' 
+                    onClick={() => navigate(`/apply/${app.id}`, { state: { applicationData: app } })}
+                >
                     修改
-                  </Button>
+                </Button>
                 )}
                 {app.status === 'PENDING' && (
                   <Button size='small' color='warning' fill='outline' onClick={() => handleCancel(app.id)}>
