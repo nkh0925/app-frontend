@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Form, Input, Button, Toast, NavBar, Radio, Space, TextArea, DatePicker } from 'antd-mobile';
+import { Form, Input, Button, Toast, NavBar, Selector, TextArea, DatePicker } from 'antd-mobile';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 
@@ -34,7 +34,6 @@ const RegisterPage = () => {
       const payload = {
         name: values.name,
         gender: values.gender,
-        // 使用辅助函数格式化日期
         birthday: formatDate(values.birthday),
         address: values.address,
         phone_number: values.phone_number,
@@ -89,12 +88,7 @@ const RegisterPage = () => {
           </Form.Item>
 
           <Form.Item name="gender" label="性别" rules={[{ required: true, message: '请选择您的性别' }]}>
-            <Radio.Group>
-              <Space>
-                <Radio value="男">男</Radio>
-                <Radio value="女">女</Radio>
-              </Space>
-            </Radio.Group>
+             <Selector options={[{label: '男', value: '男'}, {label: '女', value: '女'}]} />
           </Form.Item>
           
           <Form.Item
@@ -106,7 +100,7 @@ const RegisterPage = () => {
             }}
             rules={[{ required: true, message: '请选择您的出生日期' }]}
           >
-            <DatePicker max={new Date()}>
+            <DatePicker max={new Date()} min={new Date('1900-01-01')}>
               {value => value ? formatDate(value) : '请选择出生日期'}
             </DatePicker>
           </Form.Item>

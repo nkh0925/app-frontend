@@ -96,7 +96,6 @@ const HomePage = () => {
     });
   };
 
-
   // 渲染主体内容
   const renderContent = () => {
     if (loading) {

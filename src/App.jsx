@@ -1,12 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from'react-router-dom';
 
-// 引入我们创建的页面组件
+// 页面组件
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
 import ApplicationPage from './pages/ApplicationPage';
 
-// 引入我们创建的受保护的路由组件
+// 受保护的路由组件
 import ProtectedRoute from './components/ProtectedRoute';
 
 function
