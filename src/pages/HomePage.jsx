@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate} from 'react-router-dom';
 import { NavBar, List, Button, Toast, Empty, Tag, Dialog, SpinLoading } from 'antd-mobile';
-import { AddOutline, LeftOutline } from 'antd-mobile-icons';
+import { AddOutline} from 'antd-mobile-icons';
 import api from '../services/api';
 
 const HomePage = () => {
@@ -110,7 +110,7 @@ const HomePage = () => {
           <List.Item
             key={app.id}
             prefix={renderStatusTag(app.status)}
-            description={`申请时间: ${new Date(app.created_at).toLocaleString()}`}
+            description={`申请编号: ${app.id} `}
             extra={
               // 根据状态显示不同的操作按钮
               <>
@@ -124,15 +124,20 @@ const HomePage = () => {
                     修改
                 </Button>
                 )}
-                {app.status === 'PENDING' && (
-                  <Button size='small' color='warning' fill='outline' onClick={() => handleCancel(app.id)}>
+                {(app.status === 'PENDING' || app.status === 'REJECTED') && (
+                  <Button
+                    size='small'
+                    color={app.status === 'REJECTED' ? 'danger' : 'warning'}
+                    fill='outline'
+                    onClick={() => handleCancel(app.id)}
+                  >
                     取消申请
                   </Button>
                 )}
               </>
             }
           >
-            申请单 #{app.id} - {app.name}
+            安心卡申请 - {app.name}
           </List.Item>
         ))}
       </List>
@@ -152,7 +157,7 @@ const HomePage = () => {
         <h3 style={{ margin: '0 0 12px 0' }}>{user ? `欢迎您, ${user.name}` : '欢迎'}</h3>
         <Button block color='primary' size='large' onClick={() => navigate('/apply')}>
           <AddOutline />
-          提交一份新申请
+          <span>申请安心卡</span>
         </Button>
       </div>
 

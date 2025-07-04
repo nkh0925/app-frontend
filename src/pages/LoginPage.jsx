@@ -4,7 +4,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api'; // 引入我们配置好的axios实例
 
 const LoginPage = () => {
-  // useNavigate 是 react-router v6提供的钩子，用于页面跳转
   const navigate = useNavigate();
   // 用于控制登录按钮的加载状态，防止用户重复点击
   const [loading, setLoading] = useState(false);
@@ -16,7 +15,7 @@ const LoginPage = () => {
 
     try {
       // 调用后端登录接口 /api/auth/login
-      // 我记得后端需要 phone_number 和 password
+      // phone_number 和 password
       const response = await api.post('/auth/login', {
         phone_number: values.phone_number,
         password: values.password,
@@ -29,8 +28,7 @@ const LoginPage = () => {
           content: '登录成功',
         });
 
-        // 这是最关键的一步：将token和用户信息存入localStorage
-        // token 用于后续所有接口的认证
+        // 将token和用户信息存入localStorage
         // user 对象用于在主页显示欢迎信息
         localStorage.setItem('token', response.data.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.data.user));
@@ -60,7 +58,6 @@ const LoginPage = () => {
 
   return (
     <div>
-      {/* 适老化设计：清晰的导航栏标题 */}
       <NavBar back={null}>欢迎登录</NavBar>
       <div style={{ padding: '24px', backgroundColor: '#ffffff', height: 'calc(100vh - 45px)' }}>
         <Form
@@ -72,7 +69,6 @@ const LoginPage = () => {
             </Button>
           }
         >
-          {/* 适老化设计：清晰的标签(label)，增大的输入框(已在全局CSS中设置) */}
           <Form.Item
             name="phone_number"
             label="手机号码"

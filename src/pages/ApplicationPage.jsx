@@ -21,35 +21,33 @@ const getEditableFieldsFromComments = (comments) => {
         address: false,
         id_number: false, // 证件号和类型通常不允许修改，但以防万一
         id_type: false,
-        photos: false // 用于同时控制正反面照片
+        photos: false 
     };
 
     if (!comments) return editable; // 如果没有评论，则所有都不可编辑
 
-    const lowerCaseComments = comments.toLowerCase();
-
     // 根据关键词判断
-    if (lowerCaseComments.includes('姓名') || lowerCaseComments.includes('名字')) {
+    if (comments.includes('姓名') || comments.includes('名字')) {
         editable.name = true;
     }
-    if (lowerCaseComments.includes('性别')) {
+    if (comments.includes('性别')) {
         editable.gender = true;
     }
-    if (lowerCaseComments.includes('出生') || lowerCaseComments.includes('日期') || lowerCaseComments.includes('年龄')) {
+    if (comments.includes('出生日期') || comments.includes('生日') || comments.includes('年龄')) {
         editable.birthday = true;
     }
-    if (lowerCaseComments.includes('手机') || lowerCaseComments.includes('号码') || lowerCaseComments.includes('联系方式')) {
+    if (comments.includes('手机号码') || comments.includes('电话') || comments.includes('联系方式')) {
         editable.phone_number = true;
     }
-    if (lowerCaseComments.includes('地址')) {
+    if (comments.includes('联系地址') || comments.includes('住址')) {
         editable.address = true;
     }
-    if (lowerCaseComments.includes('证')) {
+    if (comments.includes('证件号码')) {
         editable.id_number = true;
-        editable.id_type = true; 
-        editable.photos = true;
     }
-
+    if (comments.includes('照片')) {
+        editable.photos = true;     
+    }
     return editable;
 };
 
@@ -106,14 +104,21 @@ const ApplicationPage = () => {
               setRejectionComments(existingData.comments);
               const fieldsToEdit = getEditableFieldsFromComments(existingData.comments);
               setEditableFields(fieldsToEdit);
+
+              if (fieldsToEdit.photos) {
+              setIdFrontFileList([]);
+              setIdBackFileList([]);
+            } else {
+              if (existingData.id_front_photo_url) setIdFrontFileList([{ url: existingData.id_front_photo_url }]);
+              if (existingData.id_back_photo_url) setIdBackFileList([{ url: existingData.id_back_photo_url }]);        
+            }
           }
           const dataWithDateObject = {
             ...existingData,
             birthday: existingData.birthday ? new Date(existingData.birthday) : null,
           };
           form.setFieldsValue(dataWithDateObject);
-          if (existingData.id_front_photo_url) setIdFrontFileList([{ url: existingData.id_front_photo_url }]);
-          if (existingData.id_back_photo_url) setIdBackFileList([{ url: existingData.id_back_photo_url }]);        
+
           } else {
             Toast.show({icon: 'fail', content: '缺少申请数据，请返回主页重试'});
             navigate('/', {replace: true});
@@ -122,10 +127,11 @@ const ApplicationPage = () => {
       }
       setPageLoading(false);
     };
-        // 使用 setTimeout 解决 antd-mobile form 的时序警告
-        const timer = setTimeout(() => initializePage(), 0);
-        return () => clearTimeout(timer);
+      // 使用 setTimeout 解决 antd-mobile form 的时序警告
+      const timer = setTimeout(() => initializePage(), 0);
+      return () => clearTimeout(timer);
   }, [mode, form, navigate, location.state]);
+  
   // 自定义图片上传逻辑
   const customUpload = async (file) => {
     const formData = new FormData();
@@ -178,7 +184,7 @@ const ApplicationPage = () => {
       try {
           let response;
           if (mode === 'create') {
-              const payload = { ...values, birthday: formatDate(values.birthday), id_front_photo_url: idFrontFileList[0].url, id_back_photo_url: idBackFileList[0].url };
+              const payload = { ...values, gender: values.gender[0], birthday: formatDate(values.birthday), id_front_photo_url: idFrontFileList[0].url, id_back_photo_url: idBackFileList[0].url };
               response = await api.post('/application/submit', payload);
           } else { // 'update' 模式
               // 动态构建只包含已修改字段的 payload
@@ -231,7 +237,7 @@ const ApplicationPage = () => {
                 {mode === 'create' ? '填写申请信息' : '修改申请信息'}
             </NavBar>
 
-            {/* [新增] 在修改模式下显示审核意见 */}
+            {/* 在修改模式下显示审核意见 */}
             {mode === 'update' && rejectionComments && (
                 <NoticeBar
                     content={rejectionComments}

@@ -33,7 +33,7 @@ const RegisterPage = () => {
       // 构建发送到后端的 payload，包含所有必填字段
       const payload = {
         name: values.name,
-        gender: values.gender,
+        gender: values.gender[0],
         birthday: formatDate(values.birthday),
         address: values.address,
         phone_number: values.phone_number,
@@ -79,7 +79,7 @@ const RegisterPage = () => {
           onFinish={onFinish}
           footer={
             <Button block type="submit" color="primary" size="large" loading={loading}>
-              同意协议并注册
+              <span>同意协议并注册</span>
             </Button>
           }
         >
