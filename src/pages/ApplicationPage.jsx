@@ -13,6 +13,18 @@ const formatDate = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+const calculateAge = (birthday) => {
+  if (!birthday) return 0;
+  const birthDate = new Date(birthday);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const getEditableFieldsFromComments = (comments) => {
     const editable = {
         name: false,
@@ -82,17 +94,21 @@ const ApplicationPage = () => {
           const res = await api.get('/auth/profile');
           if (res.data.success) {
             const profileData = res.data.data;
+
+            const age = calculateAge(profileData.birthday);
             // 准备要填充到表单的数据
-            const formValues = {
-              name: profileData.name,
-              gender: profileData.gender,
-              birthday: profileData.birthday ? new Date(profileData.birthday) : null,
-              phone_number: profileData.phone_number,
-              address: profileData.address,
-             id_type: '居民身份证',
-            };
-            // 使用 form.setFieldsValue 预填所有信息
-            form.setFieldsValue(formValues);
+            if (age >= 60) {
+                Toast.show({ content: '已为您预填个人资料' });
+                const formValues = {
+                  name: profileData.name,
+                  gender: profileData.gender,
+                  birthday: profileData.birthday ? new Date(profileData.birthday) : null,
+                  phone_number: profileData.phone_number,
+                  address: profileData.address,
+                  id_type: '居民身份证',
+                };
+                form.setFieldsValue(formValues);
+            }
           }
         } catch (error) {
           Toast.show({ icon: 'fail', content: error.response?.data?.message||'无法获取用户信息' });
