@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, Button, Toast, NavBar, ImageUploader, SpinLoading, Selector, DatePicker, NoticeBar } from 'antd-mobile';
+import { ExclamationCircleFill } from 'antd-mobile-icons';
 import api from '../services/api';
 
 const formatDate = (date) => {
@@ -75,7 +76,6 @@ const ApplicationPage = () => {
   // Effect Hook: 在组件加载时执行一次，用于数据初始化
   useEffect(() => {
     const initializePage = async () => {
-      setPageLoading(true); 
       if (mode === 'create') {
         // 新建模式：获取当前登录用户的个人资料以预填表单
         try {
@@ -109,9 +109,12 @@ const ApplicationPage = () => {
               setIdFrontFileList([]);
               setIdBackFileList([]);
             } else {
-              if (existingData.id_front_photo_url) setIdFrontFileList([{ url: existingData.id_front_photo_url }]);
-              if (existingData.id_back_photo_url) setIdBackFileList([{ url: existingData.id_back_photo_url }]);        
-            }
+              if (existingData.id_front_photo_url) setIdFrontFileList([{ 
+                        url: encodeURI(existingData.id_front_photo_url) 
+                      }]);
+              if (existingData.id_back_photo_url) setIdBackFileList([{ 
+                url: encodeURI(existingData.id_back_photo_url) 
+              }]);                    }
           }
           const dataWithDateObject = {
             ...existingData,
@@ -146,7 +149,8 @@ const ApplicationPage = () => {
       if (res.data.success) {
         Toast.show({ icon: 'success', content: '上传成功' });
         // ImageUploader 需要返回一个包含url属性的对象
-        return { url: res.data.data.url };
+        const encodedUrl = encodeURI(res.data.data.url);
+        return { url: encodedUrl };
       } else {
         throw new Error('上传失败');
       }
@@ -240,11 +244,11 @@ const ApplicationPage = () => {
             {/* 在修改模式下显示审核意见 */}
             {mode === 'update' && rejectionComments && (
                 <NoticeBar
-                    content={rejectionComments}
-                    color="warning"
-                    style={{ margin: '10px' }}
+                    icon={<ExclamationCircleFill />}
+                    content={`驳回原因：${rejectionComments}，请进行修改`}
+                    color="alert"
+                    style={{ margin: '5px'}}
                 >
-                    修改说明
                 </NoticeBar>
             )}
 
@@ -266,7 +270,7 @@ const ApplicationPage = () => {
                 </Form.Item>
 
                 <Form.Item name="birthday" label="出生日期" rules={[{ required: true }]} disabled={isFieldDisabled('birthday')} onClick={isFieldDisabled('birthday') ? null : (e, ref) => ref.current?.open()}>
-                    <DatePicker max={new Date()}min={new Date('1900-01-01')} 
+                    <DatePicker max={new Date()} min={new Date('1900-01-01')} 
                     onConfirm={(value) => {form.setFieldsValue({ birthday: value });}}>{value => value ? formatDate(value) : '请选择出生日期'}</DatePicker>
                 </Form.Item>
 

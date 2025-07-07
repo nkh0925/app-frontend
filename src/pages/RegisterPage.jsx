@@ -95,7 +95,7 @@ const RegisterPage = () => {
             name="birthday"
             label="出生日期"
             trigger="onConfirm"
-            onClick={(e, datePickerRef) => {
+            onClick={(datePickerRef) => {
               datePickerRef.current?.open();
             }}
             rules={[{ required: true, message: '请选择您的出生日期' }]}

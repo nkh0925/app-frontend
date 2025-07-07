@@ -8,6 +8,8 @@ import ApplicationPage from './pages/ApplicationPage';
 
 // 受保护的路由组件
 import ProtectedRoute from './components/ProtectedRoute';
+import AuditListPage from './pages/AuditListPage'; 
+import AuditDetailPage from './pages/AuditDetailPage'; 
 
 function
 App() {
